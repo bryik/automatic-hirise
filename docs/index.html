@@ -10,9 +10,32 @@
 	<body>
         <script src="./js/three.js"></script>
         <script src="./js/OrbitControls.js"></script>
+        <script id="vertexShader" type="x-shader/x-vertex">
+            uniform float u_verticalExaggeration;
+
+            attribute float elevation;
+
+            varying vec3 vColor;
+
+            void main() {
+                float MAX_UINT16 = 65535.0;
+
+                float posX = position.x;
+                float posY = position.y;
+                float posZ = (elevation / MAX_UINT16) * u_verticalExaggeration;
+
+                gl_Position = projectionMatrix * modelViewMatrix * vec4(posX, posY, posZ, 1.0);
+            }
+        </script>
+        <script id="fragmentShader" type="x-shader/x-fragment">
+            varying vec3 vColor;
+
+            void main() {
+                gl_FragColor = vec4(vColor, 1.0);
+            }
+        </script>
 		<script>
 
-            const MAX_UINT16 = Math.pow(2, 16) - 1;
             const terrainInfoPath = "./terrainInfo.json";
 
             let scene, camera, renderer, controls, tanFOV, windowHeight;
@@ -73,20 +96,25 @@
             }
 
             function createTerrainMesh(planeGeometryOptions, terrainElevations) {
-                let geometry = new THREE.PlaneGeometry(...Object.values(planeGeometryOptions));
+                let geometry = new THREE.PlaneBufferGeometry(...Object.values(planeGeometryOptions));
 
                 // This is how the plane is made to reflect the terrain.
                 // The original .IMG file stores elevation in a similar way conventional PNGs store colors, but instead
                 // of storing color, each pixel stores a height of a chunk of Martian terrain. By adjusting the z-coordinate
                 // of each vertex to match an elevation, the plane is made to *roughly* match the shape of the original terrain.
-                let zIndex = 25;
-                for (let i = 0, l = geometry.vertices.length; i < l; i++) {
-                    geometry.vertices[i].z = (terrainElevations[i] / MAX_UINT16) * zIndex;
-                }
 
-                // Black wireframe
-                let material = new THREE.MeshBasicMaterial({
-                    color: 0x110000,
+                // The z-coordinate adjustment is done in the vertex shader.
+                geometry.addAttribute('elevation', new THREE.BufferAttribute(terrainElevations, 1));
+
+                let uniforms = {
+                    u_verticalExaggeration: { type: 'f', value: 25.0 }
+                };
+
+                let material = new THREE.ShaderMaterial({
+                    uniforms: uniforms,
+                    vertexShader: document.getElementById( 'vertexShader' ).textContent,
+                    fragmentShader: document.getElementById( 'fragmentShader' ).textContent,
+                    side: THREE.DoubleSide,
                     wireframe: true
                 });
 
