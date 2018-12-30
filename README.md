@@ -4,12 +4,14 @@
   <img src="hypanis.png" width="600px" height="600px" />
 </p>
 
-This repo contains two bash scrips and some HTML/JS useful for displaying [HIRISE digital terrain models (DTMs)](https://www.uahirise.org/dtm/) in the browser. The goal is to automate away the [somewhat obscure knowledge](http://blog.mastermaps.com/2013/10/terrain-building-with-threejs-part-1.html) needed to:
+This repo contains two bash scrips and some HTML/JS useful for displaying [HIRISE digital terrain models (DTMs)](https://www.uahirise.org/dtm/) in the browser.
+
+The goal is to automate away the [somewhat obscure knowledge](http://blog.mastermaps.com/2013/10/terrain-building-with-threejs-part-1.html) needed to:
 
 - convert DTMs from .IMG to ENVI binaries with [gdal](https://www.gdal.org/)
 - render the results with [three.js](https://threejs.org/)
 
-If all the requirements are met, displaying terrain in 3D should be as easy as dropping a DTM (e.g. hypanis.IMG) into the root directory and executing:
+If all the requirements are met, displaying terrain in 3D is as easy as dropping a DTM (e.g. hypanis.IMG) into the root directory and executing:
 
 ```bash
 ./scripts/convert.sh hypanis.IMG && ./scripts/serve.sh
@@ -46,7 +48,7 @@ and visit [http://localhost:8000](http://localhost:8000).
 ./scripts/convert.sh hypanis.IMG
 ```
 
-Replacing "hypanis" with the name of the file you downloaded in step 1. This runs the `convert.sh` script which uses `gdalinfo` and `gdal_translate` to convert the .IMG file into a binary UInt16 array of elevations. It also outputs a "terrainInfo.json" file containing metadata needed to reconstruct the terrain as a THREE.js plane geometry.
+Replacing "hypanis" with the name of the file you downloaded in step 1. This runs the `convert.sh` script which uses `gdalinfo` and `gdal_translate` to convert the .IMG file into a binary UInt16 array of elevation data. It also outputs a "terrainInfo.json" file containing metadata needed to reconstruct the terrain as a THREE.js plane geometry.
 
 The output should be something like:
 
