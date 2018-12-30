@@ -14,7 +14,7 @@
             const MAX_UINT16 = Math.pow(2, 16) - 1;
             const terrainInfoPath = "./terrainInfo.json";
 
-            let scene, camera, renderer, controls;
+            let scene, camera, renderer, controls, tanFOV, windowHeight;
             init();
             addTerrain();
             animate();
@@ -34,6 +34,10 @@
                 //controls.update() must be called after any manual changes to the camera's transform
                 camera.position.set(0, 20, 120);
                 controls.update();
+
+                // Remember these initial values (used to maintain scene size when the window is resized)
+                tanFOV = Math.tan( ( ( Math.PI / 180 ) * camera.fov / 2 ) );
+                windowHeight = window.innerHeight;
             }
 
             // Fetches data necessary to create the terrain mesh, then creates and returns the mesh.
@@ -92,6 +96,23 @@
                 requestAnimationFrame(animate);
                 // required if controls.enableDamping or controls.autoRotate are set to true
                 controls.update();
+                renderer.render(scene, camera);
+            }
+
+
+            // Handle window resizing.
+            // Taken from: https://threejs.org/docs/index.html#manual/en/introduction/FAQ
+            window.addEventListener('resize', onWindowResize, false);
+            function onWindowResize(event) {
+                camera.aspect = window.innerWidth / window.innerHeight;
+
+                // adjust the FOV
+                camera.fov = ( 360 / Math.PI ) * Math.atan( tanFOV * ( window.innerHeight / windowHeight ) );
+
+                camera.updateProjectionMatrix();
+                camera.lookAt(scene.position);
+
+                renderer.setSize(window.innerWidth, window.innerHeight);
                 renderer.render(scene, camera);
             }
 
