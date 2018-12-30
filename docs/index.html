@@ -1,0 +1,100 @@
+<html>
+	<head>
+		<title>Auto HIGHRISE</title>
+		<style>
+			body { margin: 0; }
+			canvas { width: 100%; height: 100% }
+		</style>
+	</head>
+	<body>
+        <script src="./js/three.js"></script>
+        <script src="./js/OrbitControls.js"></script>
+		<script>
+
+            const MAX_UINT16 = Math.pow(2, 16) - 1;
+            const terrainInfoPath = "./terrainInfo.json";
+
+            let scene, camera, renderer, controls;
+            init();
+            addTerrain();
+            animate();
+
+            // Handles all the three.js initialization boilerplate
+            function init() {
+                scene = new THREE.Scene({antialias: true});
+                scene.background = new THREE.Color(0xffffff);
+
+                camera = new THREE.PerspectiveCamera(75, window.innerWidth/window.innerHeight, 1, 5000);
+
+                renderer = new THREE.WebGLRenderer({'antialias': true});
+                renderer.setSize(window.innerWidth, window.innerHeight);
+                document.body.appendChild(renderer.domElement);
+
+                controls = new THREE.OrbitControls(camera);
+                //controls.update() must be called after any manual changes to the camera's transform
+                camera.position.set(0, 20, 120);
+                controls.update();
+            }
+
+            // Fetches data necessary to create the terrain mesh, then creates and returns the mesh.
+            async function addTerrain() {
+                let terrainInfo = await fetch(terrainInfoPath).then( response => response.json() );
+                let terrainElevations = await fetchTerrainElevations(`../${terrainInfo.filename}`);
+
+                let planeGeometryOptions = {
+                    width: terrainInfo.width / 100,
+                    height: terrainInfo.height / 100,
+                    widthSegments: terrainInfo.reducedWidth - 1,
+                    heightSegments: terrainInfo.reducedHeight - 1
+                }
+
+                let plane = createTerrainMesh(planeGeometryOptions, terrainElevations);
+                scene.add(plane);
+            }
+
+            /**
+             * Fetches and reads the terrain elevation data contained in the binary (.bin) file.
+             * @returns {promise} that resolves to a Uint16Array of elevation data.
+             */
+            async function fetchTerrainElevations(filename) {
+                return fetch(filename).then(response => {
+                    if (!response.ok) {
+                        throw Error(`failed to fetch ${filename}`);
+                    }
+                    return response.arrayBuffer();
+                }).then(arrayBuffer => {
+                    return new Uint16Array(arrayBuffer);
+                });
+            }
+
+            function createTerrainMesh(planeGeometryOptions, terrainElevations) {
+                let geometry = new THREE.PlaneGeometry(...Object.values(planeGeometryOptions));
+
+                // This is how the plane is made to reflect the terrain.
+                // The original .IMG file stores elevation in a similar way conventional PNGs store colors, but instead
+                // of storing color, each pixel stores a height of a chunk of Martian terrain. By adjusting the z-coordinate
+                // of each vertex to match an elevation, the plane is made to *roughly* match the shape of the original terrain.
+                let zIndex = 25;
+                for (let i = 0, l = geometry.vertices.length; i < l; i++) {
+                    geometry.vertices[i].z = (terrainElevations[i] / MAX_UINT16) * zIndex;
+                }
+
+                // Black wireframe
+                let material = new THREE.MeshBasicMaterial({
+                    color: 0x110000,
+                    wireframe: true
+                });
+
+                return new THREE.Mesh(geometry, material);
+            }
+
+            function animate() {
+                requestAnimationFrame(animate);
+                // required if controls.enableDamping or controls.autoRotate are set to true
+                controls.update();
+                renderer.render(scene, camera);
+            }
+
+		</script>
+	</body>
+</html>
