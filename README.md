@@ -21,6 +21,8 @@ If all the requirements are met, displaying terrain in 3D is as easy as dropping
 
 A pre-converted binary of [Hypanis Vallis](https://www.uahirise.org/dtm/dtm.php?ID=ESP_037651_1920) has been left in the docs directory (`./docs/hypanis.bin`).
 
+To view it online, [click here](https://bryik.github.io/automatic-hirise/).
+
 To view it locally, execute:
 
 ```bash
